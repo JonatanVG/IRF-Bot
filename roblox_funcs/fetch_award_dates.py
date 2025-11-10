@@ -4,7 +4,7 @@ import time
 
 PRINT_PROGRESS = True
 BATCH_PER_PRINT = 1000
-RATE_WINDOW = 60        # Roblox seems to reset every ~90s
+RATE_WINDOW = 70        # Roblox seems to reset every ~90s
 MAX_REQUESTS = 10       # Roblox allows ~10 requests per 90s window
 
 class RateManager:
