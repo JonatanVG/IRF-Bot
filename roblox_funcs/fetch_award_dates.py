@@ -12,29 +12,46 @@ class RateManager:
         self.max_requests = max_requests
         self.remaining = max_requests
         self.window_seconds = window_seconds
-        self.reset_time = time.time() + window_seconds
+        # Do not start the window on construction; start when the first
+        # request is made so the countdown is relative to request activity.
+        self.reset_time = None
         self.lock = asyncio.Lock()
 
     async def acquire(self):
-        async with self.lock:
-            now = time.time()
-            # Reset if window expired
-            if now >= self.reset_time:
-                self.remaining = self.max_requests
-                self.reset_time = now + self.window_seconds
-                print("🔄 Rate window reset!")
+        # Loop until a slot can be consumed. Reset and sleep checks are
+        # performed under the lock but sleeping is done outside the lock
+        # so other coroutines are not blocked.
+        while True:
+            async with self.lock:
+                now = time.time()
 
-            # If no quota left, wait for reset
-            while self.remaining <= 0:
-                sleep_time = self.reset_time - time.time()
+                # If a window was started and it's expired, reset and clear
+                # the reset_time so the next request will start a new window.
+                if self.reset_time is not None and now >= self.reset_time:
+                    self.remaining = self.max_requests
+                    self.reset_time = None
+                    print("🔄 Rate window reset!")
+
+                # If we have quota available, ensure the window is started
+                # from this request (if not already) and consume one slot.
+                if self.remaining > 0:
+                    if self.reset_time is None:
+                        self.reset_time = now + self.window_seconds
+                    self.remaining -= 1
+                    return self.remaining
+
+                # No quota left; compute how long until reset. If reset_time
+                # is None (shouldn't normally happen), wait a full window.
+                sleep_time = (self.reset_time - now) if self.reset_time is not None else self.window_seconds
+
+            # Sleep outside the lock so other coroutines can run and observe state.
+            if sleep_time > 0:
                 print(f"⏳ Out of quota, waiting {sleep_time:.1f}s for reset...")
                 await asyncio.sleep(max(sleep_time, 1))
-                self.remaining = self.max_requests
-                self.reset_time = time.time() + self.window_seconds
+            else:
+                await asyncio.sleep(0.1)
 
-            # Consume 1 slot
-            self.remaining -= 1
-            return self.remaining
+RATE_MANAGER = RateManager(MAX_REQUESTS, RATE_WINDOW)
 
 async def fetch_award_dates(user_id: str, badges: dict, session, sem, rate_mgr: RateManager) -> list[str]:
     dates = []
@@ -79,7 +96,9 @@ async def fetch_award_dates(user_id: str, badges: dict, session, sem, rate_mgr: 
 
 async def fetch_multiple_award_dates(user_badges: list[dict], limit=5):
     sem = asyncio.Semaphore(limit)
-    rate_mgr = RateManager(MAX_REQUESTS, RATE_WINDOW)
+    # Use the shared module-level RateManager instance to maintain a single
+    # rate window and remaining quota across all concurrent fetches.
+    rate_mgr = RATE_MANAGER
 
     async with aiohttp.ClientSession() as session:
         tasks = [
