@@ -1,11 +1,11 @@
 ### Import all basic required libraries.
 import discord # Import Discord library
 from discord import app_commands # Will be needed if you're planning on making / commands
-from discord.ext import commands, tasks # You need commands, but tasks is only necessary if you want it to for an example execute a function once every 1 hour.
+from discord.ext import commands # You need commands, but tasks is only necessary if you want it to for an example execute a function once every 1 hour.
 import os # Import os library
-import sys # Import sys library
-import json # Import json library
 from dotenv import load_dotenv # Change import dotenv to this instead.
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 ### End import libraries.
 
 load_dotenv() # Makes the code able to read the .env file.
@@ -127,5 +127,16 @@ async def show_guilds(ctx, name: str = ""):
     await bot_managment.show_guilds.show_guilds(ctx, name)
 ### End of bot managment
 
+def health_server():
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"OK")
+
+    server = HTTPServer(("0.0.0.0", 8000), Handler)
+    server.serve_forever()
+
+threading.Thread(target=health_server, daemon=True).start()
 
 bot.run(token) # Runs the bot.
