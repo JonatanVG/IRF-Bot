@@ -144,6 +144,7 @@ def load_koyeb_url():
 def keep_alive():
     while True:
         try:
+            load_koyeb_url()
             r = requests.get(KOYEB_URL, timeout=30)
             print(f"Keep-alive ping successful: {r.status_code}")
         except requests.exceptions.RequestException as e:
