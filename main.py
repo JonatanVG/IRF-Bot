@@ -89,7 +89,6 @@ async def bgc_run(inter: discord.Interaction, usernames: str, type: str):
 ## check_database: This command checks if users in a group are in the database.
 import missingFromDatabaseChecker.Comparison as bot_funcs
 @bot.command(name="compare")
-@user_specific_perms(Supabase) # This makes so only users with permissions in the database can run this command.
 async def compare(ctx, name: str = ""):
     if bot.user.name == name:
         guild_id = ctx.guild.id
@@ -102,7 +101,6 @@ async def compare(ctx, name: str = ""):
         None
 ## Slash command version of compare
 @bot.tree.command(name="compare", description="Compares the group members with the sheet data and returns users not in the database.")
-@user_specific_perms(Supabase)
 async def compare_interaction(inter: discord.Interaction):
     await inter.response.send_message("Processing comparison, please wait...")
     guild_id = inter.guild_id
