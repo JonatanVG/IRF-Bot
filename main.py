@@ -5,10 +5,6 @@ from discord.ext import commands # You need commands, but tasks is only necessar
 import os # Import os library
 from dotenv import load_dotenv # Change import dotenv to this instead.
 import threading
-from http.server import BaseHTTPRequestHandler, HTTPServer
-import requests
-import time
-from supabase_auth import datetime
 ### End import libraries.
 
 load_dotenv() # Makes the code able to read the .env file.
@@ -20,8 +16,9 @@ from guild_funcs.guild_owner_only import guild_owner_only
 from guild_funcs.user_specific_perms import user_specific_perms
 ### End of import guild functions
 
-
+### Load environment variables
 token = os.getenv("BOT_TOKEN") # Write this to access your bots token.
+### End of load environment variables
 
 ### Import bot
 from bot_managment.bot_setup import bot
@@ -46,12 +43,6 @@ async def on_ready(): # This runs automatically when your bot starts.
     try:
         synced = await bot.tree.sync() # Syncronizes the tree commands your bot has with all servers it's in.
         print(f"Synced {len(synced)} command(s) globally.")
-        print("Auditing bot start/restart in audit_log table.")
-        Supabase.table('audit_log').insert({'reason': 'Bot Started/Restarted', 'removal_date': str(datetime.now().strftime('%H:%M-%d.%m.%Y')), 'removed_item': 'N/A', 'category': 'Bot Event'}).execute()
-        print("Bot start/restart logged successfully.")
-        print("Auditing bot start/restart in second audit_log table.")
-        Supabase2.table("audit_log").insert({"category": "Bot started", "removal_date": f"{str(datetime.now().strftime('%H:%M-%d.%m.%Y'))}", "removed_item": "N/A", "reason": "Bot started"}).execute()
-        print("Bot start/restart logged successfully in second table.")
     except Exception as e:
         print(f"Failed to syn command(s): {e}")
 
@@ -179,35 +170,8 @@ async def show_guilds(ctx, name: str = ""):
     await show_guilds_func.show_guilds(ctx, name)
 ### End of bot managment
 
-KOYEB_URL = ""
-def load_koyeb_url():
-    global KOYEB_URL
-    try:
-        KOYEB_URL = Supabase.table("KOYEB_URL").select("KOYEB_URL").execute().data[0]["KOYEB_URL"]
-        print(f"Koyeb URL loaded successfully: {KOYEB_URL}")
-    except Exception as e:
-        print(f"Failed to load Koyeb URL: {e}")
-
-def keep_alive():
-    while True:
-        try:
-            load_koyeb_url()
-            r = requests.get(KOYEB_URL, timeout=30)
-            print(f"Keep-alive ping successful: {r.status_code}")
-        except requests.exceptions.RequestException as e:
-            print(f"Keep-alive ping failed: {e}")
-        time.sleep(300)  # Ping every 5 minutes
-
-def health_server():
-    class Handler(BaseHTTPRequestHandler):
-        def do_GET(self):
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(b"OK")
-
-    server = HTTPServer(("0.0.0.0", 8000), Handler)
-    server.serve_forever()
-
+from server.health_server import health_server
+from server.keep_alive import keep_alive
 threading.Thread(target=health_server, daemon=True).start()
 threading.Thread(target=keep_alive, daemon=True).start()
 
