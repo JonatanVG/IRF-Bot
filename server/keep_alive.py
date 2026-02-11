@@ -18,4 +18,4 @@ def keep_alive():
       print("Bot start/restart logged successfully in second table.")
     except requests.exceptions.RequestException as e:
       print(f"Keep-alive ping failed: {e}")
-    time.sleep(1800)  # Ping every 30 minutes
+    time.sleep(900)  # Ping every 15 minutes
