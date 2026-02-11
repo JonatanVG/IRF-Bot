@@ -18,6 +18,7 @@ from guild_funcs.user_specific_perms import user_specific_perms
 
 ### Load environment variables
 token = os.getenv("BOT_TOKEN") # Write this to access your bots token.
+koyeb_url = os.getenv("KOYEB_URL") # Write this to access your Koyeb URL for the keep-alive function.
 ### End of load environment variables
 
 ### Import bot
@@ -165,9 +166,17 @@ async def show_guilds(ctx, name: str = ""):
   await show_guilds_func.show_guilds(ctx, name)
 ### End of bot managment
 
-from server.health_server import health_server
+from server.health_server import run_website
 from server.keep_alive import keep_alive
-threading.Thread(target=health_server, daemon=True).start()
-threading.Thread(target=keep_alive, daemon=True).start()
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+
+# Start Flask health server in background thread
+threading.Thread(target=run_website, daemon=True).start()
+
+# Initialize and start keep-alive
+threading.Thread(target=keep_alive(koyeb_url), daemon=True).start()
 
 bot.run(token) # Runs the bot.
