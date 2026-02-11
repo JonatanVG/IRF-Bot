@@ -2,6 +2,7 @@
 from flask import Flask, render_template, jsonify
 from bot_managment.supabase_setup import Supabase2
 from dotenv import load_dotenv
+from waitress import serve
 import logging
 
 load_dotenv()
@@ -62,5 +63,5 @@ def terms_of_service():
   return render_template('terms-of-service.html', title='Terms of Service', items=data)
 
 def run_website():
-  print("Starting Flask website on port 5000...")
-  app.run(host='0.0.0.0', port=8000, debug=False, use_reloader=False)
+  print("Starting Flask website on port 8000...")
+  serve(app, host='0.0.0.0', port=8000)
