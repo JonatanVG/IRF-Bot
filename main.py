@@ -5,6 +5,9 @@ from discord.ext import commands # You need commands, but tasks is only necessar
 import os # Import os library
 from dotenv import load_dotenv # Change import dotenv to this instead.
 import threading
+import sys
+import io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 ### End import libraries.
 
 load_dotenv() # Makes the code able to read the .env file.
@@ -174,10 +177,10 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 # Start Flask health server in background thread
-threading.Thread(target=run_website, daemon=True).start()
+# threading.Thread(target=run_website, daemon=True).start()
 
 # Initialize and start keep-alive
 # keep_alive(koyeb_url)
-threading.Thread(target=keep_alive, args=(koyeb_url,), daemon=True).start()
+# threading.Thread(target=keep_alive, args=(koyeb_url,), daemon=True).start()
 
 bot.run(token) # Runs the bot.

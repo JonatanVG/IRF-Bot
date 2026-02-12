@@ -24,7 +24,7 @@ async def main(inter: discord.Interaction, usernames: list[str], type: str):
   
   timer_task_obj = asyncio.create_task(time_loop())
 
-  await inter.channel.send("Processing users. This may take between 1-10 minutes depending on each users inventory size.")
+  await inter.followup.send("Processing users. This may take between 1-10 minutes depending on each users inventory size.")
 
   print("fetching trello blacklist...")
   blacklist = get_trello_blacklist()
