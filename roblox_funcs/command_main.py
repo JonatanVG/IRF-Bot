@@ -43,6 +43,9 @@ async def main(inter: discord.Interaction, usernames: list[str], type: str):
   badges_map = {b["user_id"]: b["badges"] for b in badge_results}
   for a in user_ids:
     print(f"Badges counted for {a}: {len(badges_map.get(a, {}))}")
+  for b in badges_map:
+    print(b)
+    break
 
   if type == "B":
     print("Fetching award dates for all users...")

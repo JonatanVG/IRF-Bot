@@ -1,16 +1,16 @@
-import aiohttp
+from bot_managment.aiohttpSessionSetup import get_session
 import asyncio
-import requests
 
 PRINT_PROGRESS = True
 BATCH_PER_PRINT = 1000
 
-async def fetch_badges(user_id: str, session, sem) -> dict:
+async def fetch_badges(user_id: str, sem) -> dict:
   """
   Given a Roblox user id, get the user's badge data.
   """
   badges = {}
   cursor = None
+  session = await get_session()
   async with sem:
     while True:
       url = f"https://badges.roblox.com/v1/users/{user_id}/badges?limit=100&sortOrder=Desc"
@@ -30,6 +30,5 @@ async def fetch_badges(user_id: str, session, sem) -> dict:
 
 async def fetch_multiple_users_badges(user_ids, limit=5):
   sem = asyncio.Semaphore(limit)
-  async with aiohttp.ClientSession() as session:
-    tasks = [fetch_badges(uid, session, sem) for uid in user_ids]
-    return await asyncio.gather(*tasks)
+  tasks = [fetch_badges(uid, sem) for uid in user_ids]
+  return await asyncio.gather(*tasks)

@@ -1,4 +1,4 @@
-import aiohttp
+from bot_managment.aiohttpSessionSetup import get_session
 import asyncio
 import time
 
@@ -53,15 +53,18 @@ class RateManager:
 
 RATE_MANAGER = RateManager(MAX_REQUESTS, RATE_WINDOW)
 
-async def fetch_award_dates(user_id: str, badges: dict, session, sem, rate_mgr: RateManager) -> list[str]:
+async def fetch_award_dates(user_id: str, badges: dict, sem, rate_mgr: RateManager) -> list[str]:
   dates = []
   badge_ids = list(badges.values())
   url = f"https://badges.roblox.com/v1/users/{user_id}/badges/awarded-dates"
   STEP = 100
-
+  session = await get_session()
   async with sem:
     for i in range(0, len(badge_ids), STEP):
       params = {"badgeIds": badge_ids[i:i + STEP]}
+      headers = {
+        "User-Agent": ""
+      }
 
       # Wait for rate quota
       remaining = await rate_mgr.acquire()
@@ -100,10 +103,9 @@ async def fetch_multiple_award_dates(user_badges: list[dict], limit=5):
   # rate window and remaining quota across all concurrent fetches.
   rate_mgr = RATE_MANAGER
 
-  async with aiohttp.ClientSession() as session:
-    tasks = [
-      fetch_award_dates(user_data["user_id"], user_data["badges"], session, sem, rate_mgr)
-      for user_data in user_badges if user_data.get("badges")
-    ]
-    results = await asyncio.gather(*tasks)
-    return results
+  tasks = [
+    fetch_award_dates(user_data["user_id"], user_data["badges"], sem, rate_mgr)
+    for user_data in user_badges if user_data.get("badges")
+  ]
+  results = await asyncio.gather(*tasks)
+  return results

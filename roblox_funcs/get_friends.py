@@ -1,9 +1,10 @@
-import aiohttp
+from bot_managment.aiohttpSessionSetup import get_session
 import asyncio
 from roblox_funcs.get_usernames_from_ids import get_usernames_from_ids
 
-async def get_friends(user_id, session: aiohttp.ClientSession, sem: asyncio.Semaphore):
+async def get_friends(user_id, sem: asyncio.Semaphore):
   url = f"https://friends.roblox.com/v1/users/{user_id}/friends"
+  session = await get_session()
   async with sem:  # limits concurrent requests
     async with session.get(url) as response:
       if response.status != 200:
@@ -20,6 +21,5 @@ async def get_friends(user_id, session: aiohttp.ClientSession, sem: asyncio.Sema
 
 async def fetch_multiple_friends(user_ids, limit=5):
   sem = asyncio.Semaphore(limit)
-  async with aiohttp.ClientSession() as session:
-    tasks = [get_friends(uid, session, sem) for uid in user_ids]
-    return await asyncio.gather(*tasks)
+  tasks = [get_friends(uid, sem) for uid in user_ids]
+  return await asyncio.gather(*tasks)

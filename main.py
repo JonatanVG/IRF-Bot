@@ -5,9 +5,9 @@ from discord.ext import commands # You need commands, but tasks is only necessar
 import os # Import os library
 from dotenv import load_dotenv # Change import dotenv to this instead.
 import threading
-import sys
+""" import sys
 import io
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8') """
 ### End import libraries.
 
 load_dotenv() # Makes the code able to read the .env file.
@@ -143,9 +143,11 @@ async def remove_user(ctx, bot_name: str, user: discord.User):
 
 ## Shutdown: Shuts down the bot.
 import bot_managment.shutdown as shutdown_func
+from bot_managment.aiohttpSessionSetup import close_session
 @bot.command(name="shutdown")
 @commands.is_owner() # Makes so the bot only responds if the user is the owner of the bot.
 async def shutdown(ctx, name: str = ""):
+  await close_session()
   await shutdown_func.shutdown(ctx, name)
 
 ## Ping: Returns the latency of the bot.

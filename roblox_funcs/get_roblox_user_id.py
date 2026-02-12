@@ -1,13 +1,14 @@
-import aiohttp
+from bot_managment.aiohttpSessionSetup import get_session
 import asyncio
 from roblox_funcs.get_general_usr_info import get_general_usr_info
 
-async def get_roblox_user_id(username, session, sem):
+async def get_roblox_user_id(username, sem):
   url = f"https://users.roblox.com/v1/usernames/users"
   payload = {
     "usernames": [username],
     "excludeBannedUsers": True
   }
+  session = await get_session()
   async with sem:
     async with session.post(url, json=payload) as response:
       if response.status == 200:
@@ -37,6 +38,5 @@ async def get_roblox_user_id(username, session, sem):
 
 async def fetch_multiple_ids(user_names, limit=5):
   sem = asyncio.Semaphore(limit)
-  async with aiohttp.ClientSession() as session:
-    tasks = [get_roblox_user_id(uname, session, sem) for uname in user_names]
-    return await asyncio.gather(*tasks)
+  tasks = [get_roblox_user_id(uname, sem) for uname in user_names]
+  return await asyncio.gather(*tasks)
